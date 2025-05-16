@@ -1,8 +1,7 @@
 import {
-  ArrowRight,
   ChevronDown,
   MessageSquare,
-  MoreVertical,
+  PlusCircle,
   Search,
   Star,
   User
@@ -12,33 +11,63 @@ import StarLogo from './StarLogo';
 import UserProfile from './UserProfile';
 
 const ChatInterface = ({
+  conversations,
+  currentConversationId,
   chatHistory,
   inputValue,
   setInputValue,
   handleSendMessage,
+  handleConversationSelect,
+  startNewConversation,
   isLoggedIn,
   user,
   onLogout
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarTab, setSidebarTab] = useState('recents'); // 'recents' or 'templates'
+  const [searchTerm, setSearchTerm] = useState(''); // Added state for search functionality
 
   // Template chat options
   const chatOptions = [
-    { id: 1, title: "Speak Any Language: Translate phrases instantly", icon: MessageSquare },
-    { id: 2, title: "Explore Philosophy: Discuss profound questions", icon: MessageSquare },
-    { id: 3, title: "Code Problem Solver: Debug coding issues with ease", icon: MessageSquare },
-    { id: 4, title: "Imagination Unleashed: Create a unique story from any idea", icon: MessageSquare },
-    { id: 5, title: "Learn Something New: Explain complex topics in simple terms", icon: MessageSquare },
-    { id: 6, title: "Cooking Made Easy: Get custom recipes from your ingredients", icon: MessageSquare },
-    { id: 7, title: "Virtual Travel Buddy: Tour the world virtually", icon: MessageSquare },
-    { id: 8, title: "Healthy Living Tips: Receive fitness and wellness advice", icon: MessageSquare },
-    { id: 9, title: "Art & Music Picks: Discover art and music recommendations", icon: MessageSquare },
+    { id: 1, title: "Speak Any Language: Translate phrases instantly", icon: MessageSquare, category: "recents" },
+    { id: 2, title: "Explore Philosophy: Discuss profound questions", icon: MessageSquare, category: "recents" },
+    { id: 3, title: "Code Problem Solver: Debug coding issues with ease", icon: MessageSquare, category: "recents" },
+    { id: 4, title: "Imagination Unleashed: Create a unique story from any idea", icon: MessageSquare, category: "frequent" },
+    { id: 5, title: "Learn Something New: Explain complex topics in simple terms", icon: MessageSquare, category: "frequent" },
+    { id: 6, title: "Cooking Made Easy: Get custom recipes from your ingredients", icon: MessageSquare, category: "frequent" },
+    { id: 7, title: "Virtual Travel Buddy: Tour the world virtually", icon: MessageSquare, category: "recommended" },
+    { id: 8, title: "Healthy Living Tips: Receive fitness and wellness advice", icon: MessageSquare, category: "recommended" },
+    { id: 9, title: "Art & Music Picks: Discover art and music recommendations", icon: MessageSquare, category: "recommended" },
   ];
+
+  // Sort conversations by most recent first
+  const sortedConversations = [...conversations].sort((a, b) => {
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
+
+  // Filter conversations based on search term
+  const filteredConversations = sortedConversations.filter(conversation => {
+    return (conversation.title || "New Conversation").toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       handleSendMessage();
     }
+  };
+
+  // Handler for clicking the logo/star to start a new conversation
+  const handleLogoClick = () => {
+    startNewConversation();
+  };
+
+  // Start a new conversation with a template prompt
+  const handleTemplateClick = (templateTitle) => {
+    startNewConversation();
+    // Set a timeout to ensure the new conversation is created before setting the input
+    setTimeout(() => {
+      setInputValue(templateTitle.split(":")[0]);
+    }, 100);
   };
 
   return (
@@ -49,7 +78,12 @@ const ChatInterface = ({
           <>
             {/* Sidebar header */}
             <div className="p-3 border-b border-gray-800 flex items-center">
-              <div className="w-8 h-8 mr-2">
+              {/* Logo/Star that starts a new conversation when clicked */}
+              <div
+                className="w-8 h-8 mr-2 cursor-pointer"
+                onClick={handleLogoClick}
+                title="Start new conversation"
+              >
                 <StarLogo />
               </div>
               <div className="flex-1">
@@ -57,38 +91,137 @@ const ChatInterface = ({
                   <Search size={18} className="text-gray-400 mr-2" />
                   <input
                     type="text"
-                    placeholder="Contents..."
+                    placeholder="Search..."
                     className="bg-transparent border-none outline-none text-sm w-full text-gray-300"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
               </div>
+              <button
+                className="ml-1 text-gray-400 hover:text-gray-200"
+                onClick={startNewConversation}
+                title="New Conversation"
+              >
+                <PlusCircle size={20} />
+              </button>
             </div>
 
-            {/* Recents section */}
-            <div className="py-2">
-              <div className="flex items-center px-3 py-1">
-                <ChevronDown size={16} className="text-gray-400 mr-1" />
-                <span className="text-gray-300 font-medium">Recents</span>
-                <div className="flex-grow" />
-                <button className="text-gray-500 text-xs flex items-center">
-                  View all
-                  <ArrowRight size={12} className="ml-1" />
-                </button>
-              </div>
+            {/* Sidebar tabs */}
+            <div className="flex border-b border-gray-800">
+              <button
+                className={`flex-1 py-2 text-sm font-medium ${sidebarTab === 'recents' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+                onClick={() => setSidebarTab('recents')}
+              >
+                History
+              </button>
+              <button
+                className={`flex-1 py-2 text-sm font-medium ${sidebarTab === 'templates' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+                onClick={() => setSidebarTab('templates')}
+              >
+                Templates
+              </button>
+            </div>
 
-              <div className="mt-1 space-y-1 px-2">
-                {chatOptions.slice(0, 9).map((option) => (
-                  <div key={option.id} className="flex items-center px-2 py-2 rounded-md hover:bg-gray-800 cursor-pointer">
-                    <option.icon size={18} className="text-gray-400 mr-2" />
-                    <span className="text-sm text-gray-300 truncate">{option.title}</span>
-                    <div className="flex-grow" />
-                    <button className="text-gray-500 hover:text-gray-300">
-                      <MoreVertical size={16} />
-                    </button>
+            {/* Conversation history tab */}
+            {sidebarTab === 'recents' && (
+              <div className="py-2 flex-1 overflow-y-auto">
+                <div className="flex items-center px-3 py-1">
+                  <ChevronDown size={16} className="text-gray-400 mr-1" />
+                  <span className="text-gray-300 font-medium">Conversations</span>
+                </div>
+
+                <div className="mt-1 space-y-1 px-2">
+                  {filteredConversations.map((conversation) => (
+                    <div
+                      key={conversation.id}
+                      className={`flex items-center px-2 py-2 rounded-md hover:bg-gray-800 cursor-pointer ${conversation.id === currentConversationId ? 'bg-gray-800' : ''
+                        }`}
+                      onClick={() => handleConversationSelect(conversation.id)}
+                    >
+                      <MessageSquare size={18} className="text-gray-400 mr-2" />
+                      <span className="text-sm text-gray-300 truncate">
+                        {conversation.title || "New Conversation"}
+                      </span>
+                    </div>
+                  ))}
+
+                  {filteredConversations.length === 0 && (
+                    <div className="text-center text-gray-500 text-sm px-2 py-4">
+                      {sortedConversations.length === 0 ? "No conversations yet" : "No matching conversations"}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Templates tab */}
+            {sidebarTab === 'templates' && (
+              <div className="py-2 flex-1 overflow-y-auto">
+                {/* Recents section */}
+                <div className="mb-4">
+                  <div className="flex items-center px-3 py-1">
+                    <ChevronDown size={16} className="text-gray-400 mr-1" />
+                    <span className="text-gray-300 font-medium">Recents</span>
                   </div>
-                ))}
+
+                  <div className="mt-1 space-y-1 px-2">
+                    {chatOptions.filter(option => option.category === 'recents').map((option) => (
+                      <div
+                        key={option.id}
+                        className="flex items-center px-2 py-2 rounded-md hover:bg-gray-800 cursor-pointer"
+                        onClick={() => handleTemplateClick(option.title)}
+                      >
+                        <option.icon size={18} className="text-gray-400 mr-2" />
+                        <span className="text-sm text-gray-300 truncate">{option.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Frequent section */}
+                <div className="mb-4">
+                  <div className="flex items-center px-3 py-1">
+                    <ChevronDown size={16} className="text-gray-400 mr-1" />
+                    <span className="text-gray-300 font-medium">Frequent</span>
+                  </div>
+
+                  <div className="mt-1 space-y-1 px-2">
+                    {chatOptions.filter(option => option.category === 'frequent').map((option) => (
+                      <div
+                        key={option.id}
+                        className="flex items-center px-2 py-2 rounded-md hover:bg-gray-800 cursor-pointer"
+                        onClick={() => handleTemplateClick(option.title)}
+                      >
+                        <option.icon size={18} className="text-gray-400 mr-2" />
+                        <span className="text-sm text-gray-300 truncate">{option.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Recommended section */}
+                <div>
+                  <div className="flex items-center px-3 py-1">
+                    <ChevronDown size={16} className="text-gray-400 mr-1" />
+                    <span className="text-gray-300 font-medium">Recommended</span>
+                  </div>
+
+                  <div className="mt-1 space-y-1 px-2">
+                    {chatOptions.filter(option => option.category === 'recommended').map((option) => (
+                      <div
+                        key={option.id}
+                        className="flex items-center px-2 py-2 rounded-md hover:bg-gray-800 cursor-pointer"
+                        onClick={() => handleTemplateClick(option.title)}
+                      >
+                        <option.icon size={18} className="text-gray-400 mr-2" />
+                        <span className="text-sm text-gray-300 truncate">{option.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Upgrade plan */}
             <div className="mt-auto p-3 border-t border-gray-800">
@@ -105,6 +238,17 @@ const ChatInterface = ({
       <div className="flex-1 flex flex-col bg-gray-900 overflow-hidden">
         {/* Header */}
         <div className="p-3 border-b border-gray-800 flex items-center">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="text-gray-400 hover:text-gray-200 mr-3"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+
           <div className="flex-1 flex items-center">
             <div className="relative">
               <button className="flex items-center bg-gray-800 rounded-md px-3 py-1.5 text-sm text-gray-300">
@@ -144,8 +288,12 @@ const ChatInterface = ({
                 </h3>
 
                 <div className="space-y-3">
-                  {chatOptions.slice(0, 3).map((option, index) => (
-                    <div key={index} className="bg-gray-800 hover:bg-gray-750 p-4 rounded-md cursor-pointer">
+                  {chatOptions.filter(option => option.category === 'recents').map((option, index) => (
+                    <div
+                      key={index}
+                      className="bg-gray-800 hover:bg-gray-750 p-4 rounded-md cursor-pointer"
+                      onClick={() => handleTemplateClick(option.title)}
+                    >
                       <p className="text-gray-300 text-sm">{option.title}</p>
                     </div>
                   ))}
@@ -162,8 +310,12 @@ const ChatInterface = ({
                 </h3>
 
                 <div className="space-y-3">
-                  {chatOptions.slice(3, 6).map((option, index) => (
-                    <div key={index} className="bg-gray-800 hover:bg-gray-750 p-4 rounded-md cursor-pointer">
+                  {chatOptions.filter(option => option.category === 'frequent').map((option, index) => (
+                    <div
+                      key={index}
+                      className="bg-gray-800 hover:bg-gray-750 p-4 rounded-md cursor-pointer"
+                      onClick={() => handleTemplateClick(option.title)}
+                    >
                       <p className="text-gray-300 text-sm">{option.title}</p>
                     </div>
                   ))}
@@ -180,8 +332,12 @@ const ChatInterface = ({
                 </h3>
 
                 <div className="space-y-3">
-                  {chatOptions.slice(6, 9).map((option, index) => (
-                    <div key={index} className="bg-gray-800 hover:bg-gray-750 p-4 rounded-md cursor-pointer">
+                  {chatOptions.filter(option => option.category === 'recommended').map((option, index) => (
+                    <div
+                      key={index}
+                      className="bg-gray-800 hover:bg-gray-750 p-4 rounded-md cursor-pointer"
+                      onClick={() => handleTemplateClick(option.title)}
+                    >
                       <p className="text-gray-300 text-sm">{option.title}</p>
                     </div>
                   ))}
