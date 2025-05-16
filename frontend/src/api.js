@@ -1,201 +1,127 @@
-// API functions to communicate with the Django backend
+// api.js - Updated for Google Generative AI (Gemini) API
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+// API key (for development only, move to environment variables in production)
+const GOOGLE_API_KEY = "AIzaSyCwg0_YjW1prl3KGMM4qVmmImCZL5yC3gU";
 
-// Authentication
-export const login = async (provider) => {
+// Send message to Google Generative AI
+export const sendChatMessage = async (message, isLoggedIn) => {
   try {
-    const response = await fetch(`${API_URL}/auth/login/${provider}/`, {
+    console.log("Connecting to Google Generative AI API");
+
+    // Make request to Google Generative AI API with correct format
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GOOGLE_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include', // To handle cookies for session auth
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: "You are Galaxy AI, a helpful, friendly, and concise assistant. Always provide useful responses. Now respond to this question: " + message
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1000,
+          topP: 0.95
+        }
+      })
     });
 
+    console.log("Response status:", response.status);
+
     if (!response.ok) {
-      throw new Error(`Login failed: ${response.statusText}`);
+      let errorMessage = `API Error (${response.status})`;
+
+      try {
+        const errorData = await response.json();
+        console.error("API Error Details:", errorData);
+        errorMessage = errorData.error?.message || errorMessage;
+      } catch (e) {
+        const textError = await response.text();
+        console.error("API Error Text:", textError);
+      }
+
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
-    localStorage.setItem('token', data.token);
-    return true;
+    console.log("API Response:", data);
+
+    // Extract the response text
+    if (!data.candidates || data.candidates.length === 0) {
+      throw new Error("No response generated");
+    }
+
+    const aiResponse = data.candidates[0]?.content?.parts?.[0]?.text;
+
+    if (!aiResponse) {
+      throw new Error("Could not extract response text");
+    }
+
+    return { message: aiResponse };
   } catch (error) {
-    console.error('Login error:', error);
-    return false;
+    console.error('API Error:', error);
+
+    return {
+      message: `Sorry, I encountered an error while trying to process your request. Error: ${error.message}. Please try again.`
+    };
   }
+};
+
+// Keep your existing authentication functions
+export const login = async (provider) => {
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  const userData = {
+    id: 1,
+    username: `${provider}_user`,
+    email: `${provider}@example.com`,
+    first_name: provider.charAt(0).toUpperCase() + provider.slice(1),
+    last_name: 'User',
+    profile: { avatar: null }
+  };
+
+  localStorage.setItem('token', `mock-${provider}-token`);
+  return userData;
 };
 
 export const logout = async () => {
-  try {
-    const response = await fetch(`${API_URL}/auth/logout/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Token ${localStorage.getItem('token')}`,
-      },
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      throw new Error(`Logout failed: ${response.statusText}`);
-    }
-
-    localStorage.removeItem('token');
-    return true;
-  } catch (error) {
-    console.error('Logout error:', error);
-    return false;
-  }
-};
-
-// Chat
-export const sendChatMessage = async (message, isLoggedIn) => {
-  try {
-    const headers = {
-      'Content-Type': 'application/json',
-    };
-
-    // Add auth token if user is logged in
-    if (isLoggedIn) {
-      const token = localStorage.getItem('token');
-      if (token) {
-        headers['Authorization'] = `Token ${token}`;
-      }
-    }
-
-    const response = await fetch(`${API_URL}/chat/message/`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ message }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('API error:', error);
-    throw error;
-  }
-};
-
-// Get chat history for logged in user
-export const getChatHistory = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
-
-    const response = await fetch(`${API_URL}/chat/history/`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Token ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to get chat history: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Get chat history error:', error);
-    throw error;
-  }
-};
-// Authentication with social providers
-// Add this to your src/api.js file
-
-export const loginWithGoogle = async (idToken) => {
-  try {
-    const response = await fetch(`${API_URL}/auth/login/google/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ id_token: idToken }),
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `Google login failed: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    localStorage.setItem('token', data.token);
-
-    // For testing when backend isn't ready
-    if (!data.user) {
-      return {
-        id: 1,
-        username: 'testuser',
-        email: 'test@example.com',
-        first_name: 'Test',
-        last_name: 'User',
-        profile: {
-          avatar: null
-        }
-      };
-    }
-
-    return data.user;
-  } catch (error) {
-    console.error('Google login error:', error);
-    throw error;
-  }
-};
-
-export const loginWithFacebook = async (accessToken) => {
-  try {
-    const response = await fetch(`${API_URL}/auth/login/facebook/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ access_token: accessToken }),
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      throw new Error(`Facebook login failed: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    localStorage.setItem('token', data.token);
-    return data.user;
-  } catch (error) {
-    console.error('Facebook login error:', error);
-    throw error;
-  }
+  await new Promise(resolve => setTimeout(resolve, 300));
+  localStorage.removeItem('token');
+  return true;
 };
 
 export const getUserProfile = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
+  await new Promise(resolve => setTimeout(resolve, 400));
 
-    const response = await fetch(`${API_URL}/auth/users/me/`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Token ${token}`,
-      },
-    });
+  const token = localStorage.getItem('token');
+  if (!token) {
+    throw new Error('No authentication token found');
+  }
 
-    if (!response.ok) {
-      throw new Error(`Failed to get user profile: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Get user profile error:', error);
-    throw error;
+  if (token.includes('google')) {
+    return {
+      id: 1,
+      username: 'google_user',
+      email: 'google@example.com',
+      first_name: 'Google',
+      last_name: 'User',
+      profile: { avatar: null }
+    };
+  } else {
+    return {
+      id: 2,
+      username: 'facebook_user',
+      email: 'facebook@example.com',
+      first_name: 'Facebook',
+      last_name: 'User',
+      profile: { avatar: null }
+    };
   }
 };

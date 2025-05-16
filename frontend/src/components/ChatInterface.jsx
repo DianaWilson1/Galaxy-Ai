@@ -105,8 +105,6 @@ const ChatInterface = ({
       <div className="flex-1 flex flex-col bg-gray-900 overflow-hidden">
         {/* Header */}
         <div className="p-3 border-b border-gray-800 flex items-center">
-
-
           <div className="flex-1 flex items-center">
             <div className="relative">
               <button className="flex items-center bg-gray-800 rounded-md px-3 py-1.5 text-sm text-gray-300">
@@ -115,9 +113,6 @@ const ChatInterface = ({
               </button>
             </div>
           </div>
-
-
-
 
           {isLoggedIn && user ? (
             <div className="ml-2">
@@ -205,7 +200,7 @@ const ChatInterface = ({
                   className={`max-w-3/4 rounded-lg px-4 py-2 ${message.sender === 'user'
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-800 text-gray-200'
-                    }`}
+                    } ${message.isTyping ? 'animate-pulse' : ''}`}
                 >
                   {message.text}
                 </div>

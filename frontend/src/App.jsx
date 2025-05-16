@@ -46,6 +46,7 @@ const App = () => {
     setShowChat(true);
   };
 
+  // Update the handleSendMessage function
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
@@ -56,28 +57,38 @@ const App = () => {
     const userMessage = inputValue;
     setInputValue('');
 
+    // Show a "typing" indicator
+    const typingIndicator = {
+      id: Date.now() + 0.5,
+      text: "Typing...",
+      sender: 'ai',
+      isTyping: true
+    };
+    setChatHistory(prev => [...prev, typingIndicator]);
+
     try {
-      // Send message to backend and get AI response
+      // Send message to OpenAI and get response
       const response = await sendChatMessage(userMessage, isLoggedIn);
 
-      const aiResponse = {
-        id: Date.now() + 1,
-        text: response.message,
-        sender: 'ai'
-      };
-
-      setChatHistory(prev => [...prev, aiResponse]);
+      // Remove typing indicator and add actual response
+      setChatHistory(prev =>
+        prev.filter(msg => !msg.isTyping).concat({
+          id: Date.now() + 1,
+          text: response.message,
+          sender: 'ai'
+        })
+      );
     } catch (error) {
       console.error('Failed to get AI response:', error);
 
-      // Fallback error message
-      const errorResponse = {
-        id: Date.now() + 1,
-        text: "I'm sorry, I couldn't process your request. Please try again.",
-        sender: 'ai'
-      };
-
-      setChatHistory(prev => [...prev, errorResponse]);
+      // Remove typing indicator and add error message
+      setChatHistory(prev =>
+        prev.filter(msg => !msg.isTyping).concat({
+          id: Date.now() + 1,
+          text: "I'm having trouble connecting. Please check your connection or try again later.",
+          sender: 'ai'
+        })
+      );
     }
   };
 
