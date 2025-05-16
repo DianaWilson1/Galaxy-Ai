@@ -1,51 +1,26 @@
+import backgroundImage from './assets/backpicture.png'; // Import the background image
 import SocialLogin from './SocialLogin';
 import StarLogo from './StarLogo';
 
 const LandingPage = ({ onStartChat, onLoginSuccess, isLoggedIn, user }) => {
   return (
     <div className="h-full flex flex-col items-center justify-center relative overflow-hidden">
-      {/* Background grid with golden ratio patterns */}
-      <div className="absolute inset-0 w-full h-full opacity-20">
-        <svg className="w-full h-full" viewBox="0 0 1000 1000">
-          <g stroke="rgb(56, 189, 248)" strokeWidth="1" fill="none">
-            <rect x="100" y="100" width="800" height="800" />
-            <rect x="100" y="100" width="495" height="495" />
-            <rect x="100" y="595" width="305" height="305" />
-            <rect x="405" y="595" width="190" height="190" />
-            <rect x="595" y="100" width="305" height="305" />
-            <rect x="595" y="405" width="190" height="190" />
-
-            {/* Circles */}
-            <circle cx="500" cy="500" r="400" />
-            <circle cx="500" cy="500" r="250" />
-            <circle cx="500" cy="500" r="150" />
-
-            {/* Diagonal lines */}
-            <line x1="100" y1="100" x2="900" y2="900" />
-            <line x1="900" y1="100" x2="100" y2="900" />
-          </g>
-        </svg>
-      </div>
+      {/* Background image */}
+      <div
+        className="absolute inset-0 w-full h-full"
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      />
 
       {/* Logo and content */}
       <div className="z-10 flex flex-col items-center">
         <div className="mb-8 relative">
-          <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center relative">
-            <div className="w-12 h-12 text-white">
-              <StarLogo />
-            </div>
-
-            {/* Blue dots around the circle */}
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div
-                key={i}
-                className="absolute w-3 h-3 bg-blue-400"
-                style={{
-                  borderRadius: i % 2 === 0 ? '2px' : '1px',
-                  transform: `rotate(${i * 30}deg) translateY(-40px) ${i % 2 === 0 ? 'rotate(45deg)' : ''}`,
-                }}
-              />
-            ))}
+          <div className="w-16 h-12 text-white">
+            <StarLogo />
           </div>
         </div>
 
@@ -81,8 +56,6 @@ const LandingPage = ({ onStartChat, onLoginSuccess, isLoggedIn, user }) => {
           )}
         </div>
       </div>
-
-      {/* Footer */}
     </div>
   );
 };
