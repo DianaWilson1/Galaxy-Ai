@@ -1,13 +1,9 @@
 import {
-  AlertTriangle,
   ArrowRight,
   ChevronDown,
-  Menu,
   MessageSquare,
   MoreVertical,
-  PlusCircle,
   Search,
-  Settings,
   Star,
   User
 } from 'lucide-react';
@@ -39,8 +35,6 @@ const ChatInterface = ({
     { id: 9, title: "Art & Music Picks: Discover art and music recommendations", icon: MessageSquare },
   ];
 
-  const favoriteOptions = chatOptions.slice(3, 9);
-
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       handleSendMessage();
@@ -68,12 +62,6 @@ const ChatInterface = ({
                   />
                 </div>
               </div>
-              <button className="ml-1 text-gray-400 hover:text-gray-200">
-                <PlusCircle size={20} />
-              </button>
-              <button className="ml-1 text-gray-400 hover:text-gray-200">
-                <MoreVertical size={20} />
-              </button>
             </div>
 
             {/* Recents section */}
@@ -89,33 +77,7 @@ const ChatInterface = ({
               </div>
 
               <div className="mt-1 space-y-1 px-2">
-                {chatOptions.slice(0, 3).map((option) => (
-                  <div key={option.id} className="flex items-center px-2 py-2 rounded-md hover:bg-gray-800 cursor-pointer">
-                    <option.icon size={18} className="text-gray-400 mr-2" />
-                    <span className="text-sm text-gray-300 truncate">{option.title}</span>
-                    <div className="flex-grow" />
-                    <button className="text-gray-500 hover:text-gray-300">
-                      <MoreVertical size={16} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Favorites section */}
-            <div className="py-2">
-              <div className="flex items-center px-3 py-1">
-                <ChevronDown size={16} className="text-gray-400 mr-1" />
-                <span className="text-gray-300 font-medium">Favorites</span>
-                <div className="flex-grow" />
-                <button className="text-gray-500 text-xs flex items-center">
-                  View all
-                  <ArrowRight size={12} className="ml-1" />
-                </button>
-              </div>
-
-              <div className="mt-1 space-y-1 px-2">
-                {favoriteOptions.map((option) => (
+                {chatOptions.slice(0, 9).map((option) => (
                   <div key={option.id} className="flex items-center px-2 py-2 rounded-md hover:bg-gray-800 cursor-pointer">
                     <option.icon size={18} className="text-gray-400 mr-2" />
                     <span className="text-sm text-gray-300 truncate">{option.title}</span>
@@ -143,25 +105,19 @@ const ChatInterface = ({
       <div className="flex-1 flex flex-col bg-gray-900 overflow-hidden">
         {/* Header */}
         <div className="p-3 border-b border-gray-800 flex items-center">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-gray-400 hover:text-gray-200 mr-3"
-          >
-            <Menu size={20} />
-          </button>
+
 
           <div className="flex-1 flex items-center">
             <div className="relative">
               <button className="flex items-center bg-gray-800 rounded-md px-3 py-1.5 text-sm text-gray-300">
-                <span>Model</span>
+                <span>Assistant.01</span>
                 <ChevronDown size={16} className="ml-2 text-gray-500" />
               </button>
             </div>
           </div>
 
-          <button className="text-gray-400 hover:text-gray-200 ml-2">
-            <Settings size={20} />
-          </button>
+
+
 
           {isLoggedIn && user ? (
             <div className="ml-2">
@@ -279,18 +235,6 @@ const ChatInterface = ({
                 <polygon points="22 2 15 22 11 13 2 9 22 2" />
               </svg>
             </button>
-          </div>
-
-          {/* Footer */}
-          <div className="mt-3 text-center text-xs text-gray-500 flex items-center justify-center">
-            <AlertTriangle size={12} className="mr-1" />
-            Galaxy AI can make mistakes. Check important info.
-            <span className="mx-2">·</span>
-            <a href="#" className="hover:underline">Privacy Policy</a>
-            <span className="mx-2">·</span>
-            <a href="#" className="hover:underline">Legal Notice</a>
-            <span className="mx-2">·</span>
-            Copyright © 2025 Galaxy AI. All rights reserved.
           </div>
         </div>
       </div>

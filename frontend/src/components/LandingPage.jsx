@@ -83,9 +83,6 @@ const LandingPage = ({ onStartChat, onLoginSuccess, isLoggedIn, user }) => {
       </div>
 
       {/* Footer */}
-      <div className="absolute bottom-6 text-gray-500 text-sm">
-        Galaxy AI can make mistakes. Check important info. &copy; 2025 Galaxy AI. All rights reserved.
-      </div>
     </div>
   );
 };
