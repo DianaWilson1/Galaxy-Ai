@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import StarLogo from './StarLogo';
+import UserProfile from './UserProfile';
 
 const ChatInterface = ({
   chatHistory,
@@ -20,7 +21,8 @@ const ChatInterface = ({
   setInputValue,
   handleSendMessage,
   isLoggedIn,
-  onLogin
+  user,
+  onLogout
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -161,13 +163,13 @@ const ChatInterface = ({
             <Settings size={20} />
           </button>
 
-          {isLoggedIn ? (
-            <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center ml-2 text-white font-medium">
-              U
+          {isLoggedIn && user ? (
+            <div className="ml-2">
+              <UserProfile user={user} onLogout={onLogout} />
             </div>
           ) : (
             <button
-              onClick={() => onLogin('google')}
+              onClick={() => window.location.href = '/'}
               className="bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded-md ml-2"
             >
               Login

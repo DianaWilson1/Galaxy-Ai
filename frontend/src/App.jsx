@@ -1,25 +1,45 @@
-import { useState } from 'react';
-import { login, sendChatMessage } from './api';
+import { useEffect, useState } from 'react';
+import { getUserProfile, sendChatMessage } from './api';
 import ChatInterface from './components/ChatInterface';
 import LandingPage from './components/LandingPage';
 
 const App = () => {
   const [showChat, setShowChat] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
   const [inputValue, setInputValue] = useState('');
 
-  const handleLogin = async (provider) => {
-    try {
-      // This would connect to your backend auth in a real app
-      const success = await login(provider);
-      if (success) {
-        setIsLoggedIn(true);
-      }
-    } catch (error) {
-      console.error('Login failed:', error);
-      // Handle login failure
+  // Check if user is already logged in
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetchUserProfile();
     }
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const userData = await getUserProfile();
+      setUser(userData);
+      setIsLoggedIn(true);
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+      // Clear invalid token
+      localStorage.removeItem('token');
+    }
+  };
+
+  const handleLoginSuccess = (userData) => {
+    setUser(userData);
+    setIsLoggedIn(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+    setIsLoggedIn(false);
+    setChatHistory([]);
   };
 
   const handleStartChat = () => {
@@ -64,7 +84,12 @@ const App = () => {
   return (
     <div className="h-screen flex flex-col bg-gray-900 text-gray-200">
       {!showChat ? (
-        <LandingPage onStartChat={handleStartChat} onLogin={handleLogin} isLoggedIn={isLoggedIn} />
+        <LandingPage
+          onStartChat={handleStartChat}
+          onLoginSuccess={handleLoginSuccess}
+          isLoggedIn={isLoggedIn}
+          user={user}
+        />
       ) : (
         <ChatInterface
           chatHistory={chatHistory}
@@ -72,7 +97,8 @@ const App = () => {
           setInputValue={setInputValue}
           handleSendMessage={handleSendMessage}
           isLoggedIn={isLoggedIn}
-          onLogin={handleLogin}
+          user={user}
+          onLogout={handleLogout}
         />
       )}
     </div>

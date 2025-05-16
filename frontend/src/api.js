@@ -107,3 +107,95 @@ export const getChatHistory = async () => {
     throw error;
   }
 };
+// Authentication with social providers
+// Add this to your src/api.js file
+
+export const loginWithGoogle = async (idToken) => {
+  try {
+    const response = await fetch(`${API_URL}/auth/login/google/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id_token: idToken }),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Google login failed: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    localStorage.setItem('token', data.token);
+
+    // For testing when backend isn't ready
+    if (!data.user) {
+      return {
+        id: 1,
+        username: 'testuser',
+        email: 'test@example.com',
+        first_name: 'Test',
+        last_name: 'User',
+        profile: {
+          avatar: null
+        }
+      };
+    }
+
+    return data.user;
+  } catch (error) {
+    console.error('Google login error:', error);
+    throw error;
+  }
+};
+
+export const loginWithFacebook = async (accessToken) => {
+  try {
+    const response = await fetch(`${API_URL}/auth/login/facebook/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ access_token: accessToken }),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Facebook login failed: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    localStorage.setItem('token', data.token);
+    return data.user;
+  } catch (error) {
+    console.error('Facebook login error:', error);
+    throw error;
+  }
+};
+
+export const getUserProfile = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_URL}/auth/users/me/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Token ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get user profile: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Get user profile error:', error);
+    throw error;
+  }
+};
