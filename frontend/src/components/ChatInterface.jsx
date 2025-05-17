@@ -3,8 +3,7 @@ import {
   MessageSquare,
   PlusCircle,
   Search,
-  Star,
-  User
+  Star
 } from 'lucide-react';
 import { useState } from 'react';
 import StarLogo from './StarLogo';
@@ -26,6 +25,14 @@ const ChatInterface = ({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarTab, setSidebarTab] = useState('recents'); // 'recents' or 'templates'
   const [searchTerm, setSearchTerm] = useState(''); // Added state for search functionality
+  const [selectedAssistant, setSelectedAssistant] = useState('Assistant 1.0'); // New state for assistant selection
+  const [assistantDropdownOpen, setAssistantDropdownOpen] = useState(false); // State to control dropdown visibility
+
+  // Available assistants
+  const assistantOptions = [
+    "Assistant 2.0",
+    "Assistant 3.0"
+  ];
 
   // Template chat options
   const chatOptions = [
@@ -68,6 +75,12 @@ const ChatInterface = ({
     setTimeout(() => {
       setInputValue(templateTitle.split(":")[0]);
     }, 100);
+  };
+
+  // Handler for selecting an assistant
+  const handleAssistantSelect = (assistant) => {
+    setSelectedAssistant(assistant);
+    setAssistantDropdownOpen(false);
   };
 
   return (
@@ -224,12 +237,6 @@ const ChatInterface = ({
             )}
 
             {/* Upgrade plan */}
-            <div className="mt-auto p-3 border-t border-gray-800">
-              <div className="flex items-center px-2 py-2 rounded-md hover:bg-gray-800 cursor-pointer">
-                <User size={18} className="text-gray-400 mr-2" />
-                <span className="text-sm text-gray-300">Upgrade plan for more access</span>
-              </div>
-            </div>
           </>
         )}
       </div>
@@ -242,19 +249,32 @@ const ChatInterface = ({
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="text-gray-400 hover:text-gray-200 mr-3"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
           </button>
 
           <div className="flex-1 flex items-center">
             <div className="relative">
-              <button className="flex items-center bg-gray-800 rounded-md px-3 py-1.5 text-sm text-gray-300">
-                <span>Assistant.01</span>
+              <button
+                className="flex items-center bg-gray-800 rounded-md px-3 py-1.5 text-sm text-gray-300"
+                onClick={() => setAssistantDropdownOpen(!assistantDropdownOpen)}
+              >
+                <span>{selectedAssistant}</span>
                 <ChevronDown size={16} className="ml-2 text-gray-500" />
               </button>
+
+              {/* Assistant dropdown menu */}
+              {assistantDropdownOpen && (
+                <div className="absolute top-full left-0 mt-1 bg-gray-800 rounded-md shadow-lg py-1 w-full z-10">
+                  {assistantOptions.map((assistant) => (
+                    <div
+                      key={assistant}
+                      className="px-3 py-1.5 text-sm text-gray-300 hover:bg-gray-700 cursor-pointer"
+                      onClick={() => handleAssistantSelect(assistant)}
+                    >
+                      {assistant}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
