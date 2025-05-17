@@ -1,4 +1,4 @@
-import { Edit, HelpCircle, LogOut, Moon, Settings, User } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { logout } from '../api';
 
@@ -64,39 +64,6 @@ const UserProfile = ({ user, onLogout }) => {
             </div>
           </div>
 
-          <div className="py-1">
-            <button
-              onClick={() => {/* Navigate to profile */ }}
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-            >
-              <User size={16} className="mr-2" />
-              Your Profile
-            </button>
-            <button
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-            >
-              <Settings size={16} className="mr-2" />
-              Settings
-            </button>
-            <button
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-            >
-              <Edit size={16} className="mr-2" />
-              Edit Preferences
-            </button>
-            <button
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-            >
-              <Moon size={16} className="mr-2" />
-              Dark Mode
-            </button>
-            <button
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700"
-            >
-              <HelpCircle size={16} className="mr-2" />
-              Help & Support
-            </button>
-          </div>
 
           <div className="py-1 border-t border-gray-700">
             <button

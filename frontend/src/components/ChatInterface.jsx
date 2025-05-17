@@ -1,9 +1,13 @@
 import {
+  Check,
   ChevronDown,
+  Edit2,
   MessageSquare,
   PlusCircle,
   Search,
-  Star
+  Star,
+  Trash2,
+  X
 } from 'lucide-react';
 import { useState } from 'react';
 import StarLogo from './StarLogo';
@@ -20,13 +24,20 @@ const ChatInterface = ({
   startNewConversation,
   isLoggedIn,
   user,
-  onLogout
+  onLogout,
+  // Add new props for conversation management
+  updateConversationTitle,
+  deleteConversation
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarTab, setSidebarTab] = useState('recents'); // 'recents' or 'templates'
   const [searchTerm, setSearchTerm] = useState(''); // Added state for search functionality
   const [selectedAssistant, setSelectedAssistant] = useState('Assistant 1.0'); // New state for assistant selection
   const [assistantDropdownOpen, setAssistantDropdownOpen] = useState(false); // State to control dropdown visibility
+
+  // Add new state for editing conversation titles
+  const [editingConversationId, setEditingConversationId] = useState(null);
+  const [editingTitle, setEditingTitle] = useState('');
 
   // Available assistants
   const assistantOptions = [
@@ -81,6 +92,40 @@ const ChatInterface = ({
   const handleAssistantSelect = (assistant) => {
     setSelectedAssistant(assistant);
     setAssistantDropdownOpen(false);
+  };
+
+  // New handlers for editing and deleting conversations
+  const startEditingConversation = (conversationId, currentTitle) => {
+    setEditingConversationId(conversationId);
+    setEditingTitle(currentTitle || "New Conversation");
+  };
+
+  const cancelEditingConversation = () => {
+    setEditingConversationId(null);
+    setEditingTitle('');
+  };
+
+  const saveConversationTitle = () => {
+    if (editingConversationId && editingTitle.trim()) {
+      updateConversationTitle(editingConversationId, editingTitle.trim());
+      setEditingConversationId(null);
+      setEditingTitle('');
+    }
+  };
+
+  const handleTitleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      saveConversationTitle();
+    } else if (e.key === 'Escape') {
+      cancelEditingConversation();
+    }
+  };
+
+  const handleDeleteConversation = (conversationId, e) => {
+    e.stopPropagation(); // Prevent conversation selection
+    if (window.confirm('Are you sure you want to delete this conversation?')) {
+      deleteConversation(conversationId);
+    }
   };
 
   return (
@@ -148,14 +193,58 @@ const ChatInterface = ({
                   {filteredConversations.map((conversation) => (
                     <div
                       key={conversation.id}
-                      className={`flex items-center px-2 py-2 rounded-md hover:bg-gray-800 cursor-pointer ${conversation.id === currentConversationId ? 'bg-gray-800' : ''
-                        }`}
-                      onClick={() => handleConversationSelect(conversation.id)}
+                      className={`flex items-center px-2 py-2 rounded-md hover:bg-gray-800 cursor-pointer ${conversation.id === currentConversationId ? 'bg-gray-800' : ''}`}
+                      onClick={() => editingConversationId !== conversation.id && handleConversationSelect(conversation.id)}
                     >
                       <MessageSquare size={18} className="text-gray-400 mr-2" />
-                      <span className="text-sm text-gray-300 truncate">
-                        {conversation.title || "New Conversation"}
-                      </span>
+
+                      {editingConversationId === conversation.id ? (
+                        // Editing mode
+                        <div className="flex-1 flex items-center" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="text"
+                            value={editingTitle}
+                            onChange={(e) => setEditingTitle(e.target.value)}
+                            onKeyDown={handleTitleKeyPress}
+                            className="flex-1 bg-gray-700 text-gray-200 text-sm rounded px-2 py-1 focus:outline-none"
+                            autoFocus
+                          />
+                          <button
+                            onClick={saveConversationTitle}
+                            className="ml-1 text-green-400 hover:text-green-300"
+                          >
+                            <Check size={16} />
+                          </button>
+                          <button
+                            onClick={cancelEditingConversation}
+                            className="ml-1 text-red-400 hover:text-red-300"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        // Display mode
+                        <>
+                          <span className="text-sm text-gray-300 truncate flex-1">
+                            {conversation.title || "New Conversation"}
+                          </span>
+                          <button
+                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-200 ml-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startEditingConversation(conversation.id, conversation.title);
+                            }}
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button
+                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-300 ml-1"
+                            onClick={(e) => handleDeleteConversation(conversation.id, e)}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </>
+                      )}
                     </div>
                   ))}
 
