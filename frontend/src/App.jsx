@@ -191,6 +191,38 @@ const App = () => {
     setCurrentConversationId(conversationId);
   };
 
+  // Add these conversation management functions
+  const updateConversationTitle = (conversationId, newTitle) => {
+    console.log("Updating conversation title", conversationId, newTitle);
+    setConversations(prevConversations =>
+      prevConversations.map(conv =>
+        conv.id === conversationId
+          ? { ...conv, title: newTitle }
+          : conv
+      )
+    );
+  };
+
+  const deleteConversation = (conversationId) => {
+    console.log("Deleting conversation", conversationId);
+    setConversations(prevConversations =>
+      prevConversations.filter(conv => conv.id !== conversationId)
+    );
+
+    // If the deleted conversation was the current one, select another one or reset
+    if (conversationId === currentConversationId) {
+      const remainingConversations = conversations.filter(
+        conv => conv.id !== conversationId
+      );
+
+      if (remainingConversations.length > 0) {
+        setCurrentConversationId(remainingConversations[0].id);
+      } else {
+        setCurrentConversationId(null);
+      }
+    }
+  };
+
   return (
     <div className="h-screen flex flex-col bg-gray-900 text-gray-200">
       {!showChat ? (
@@ -213,6 +245,8 @@ const App = () => {
           isLoggedIn={isLoggedIn}
           user={user}
           onLogout={handleLogout}
+          updateConversationTitle={updateConversationTitle} // Added prop
+          deleteConversation={deleteConversation} // Added prop
         />
       )}
     </div>

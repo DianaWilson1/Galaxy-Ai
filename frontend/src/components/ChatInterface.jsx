@@ -1,15 +1,16 @@
 import {
   Check,
   ChevronDown,
-  Edit2,
+  Edit,
+  Menu,
   MessageSquare,
   PlusCircle,
   Search,
   Star,
-  Trash2,
+  Trash,
   X
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import StarLogo from './StarLogo';
 import UserProfile from './UserProfile';
 
@@ -25,7 +26,7 @@ const ChatInterface = ({
   isLoggedIn,
   user,
   onLogout,
-  // Add new props for conversation management
+  // Add new required props for conversation management
   updateConversationTitle,
   deleteConversation
 }) => {
@@ -35,9 +36,25 @@ const ChatInterface = ({
   const [selectedAssistant, setSelectedAssistant] = useState('Assistant 1.0'); // New state for assistant selection
   const [assistantDropdownOpen, setAssistantDropdownOpen] = useState(false); // State to control dropdown visibility
 
-  // Add new state for editing conversation titles
+  // Add state for editing conversation titles
   const [editingConversationId, setEditingConversationId] = useState(null);
   const [editingTitle, setEditingTitle] = useState('');
+
+  // Check if functions are properly defined
+  const [functionsReady, setFunctionsReady] = useState(false);
+
+  // Check if the required functions are available
+  useEffect(() => {
+    const hasUpdateFunction = typeof updateConversationTitle === 'function';
+    const hasDeleteFunction = typeof deleteConversation === 'function';
+
+    console.log("ChatInterface props check:", {
+      hasUpdateFunction,
+      hasDeleteFunction
+    });
+
+    setFunctionsReady(hasUpdateFunction && hasDeleteFunction);
+  }, [updateConversationTitle, deleteConversation]);
 
   // Available assistants
   const assistantOptions = [
@@ -94,20 +111,66 @@ const ChatInterface = ({
     setAssistantDropdownOpen(false);
   };
 
-  // New handlers for editing and deleting conversations
-  const startEditingConversation = (conversationId, currentTitle) => {
+  // ADDED: New handlers for editing and deleting conversations
+  const startEditingConversation = (e, conversationId, currentTitle) => {
+    e.stopPropagation(); // Prevent conversation selection when clicking edit
     setEditingConversationId(conversationId);
     setEditingTitle(currentTitle || "New Conversation");
   };
 
-  const cancelEditingConversation = () => {
+  const cancelEditingConversation = (e) => {
+    if (e) e.stopPropagation();
     setEditingConversationId(null);
     setEditingTitle('');
   };
 
-  const saveConversationTitle = () => {
+  // Modified saveConversationTitle with fallback for missing function
+  const saveConversationTitle = (e) => {
+    if (e) e.stopPropagation();
     if (editingConversationId && editingTitle.trim()) {
-      updateConversationTitle(editingConversationId, editingTitle.trim());
+      if (functionsReady && typeof updateConversationTitle === 'function') {
+        try {
+          updateConversationTitle(editingConversationId, editingTitle.trim());
+        } catch (error) {
+          console.error("Error updating conversation title:", error);
+          // Fallback: update directly in localStorage
+          try {
+            const storedConversations = localStorage.getItem('userConversations');
+            if (storedConversations) {
+              let convs = JSON.parse(storedConversations);
+              convs = convs.map(conv =>
+                conv.id === editingConversationId ? { ...conv, title: editingTitle.trim() } : conv
+              );
+              localStorage.setItem('userConversations', JSON.stringify(convs));
+
+              // Force reload to update UI
+              window.location.reload();
+            }
+          } catch (localError) {
+            console.error("Fallback failed:", localError);
+          }
+        }
+      } else {
+        console.error("updateConversationTitle function is not available");
+        // Direct localStorage fallback
+        try {
+          const storedConversations = localStorage.getItem('userConversations');
+          if (storedConversations) {
+            let convs = JSON.parse(storedConversations);
+            convs = convs.map(conv =>
+              conv.id === editingConversationId ? { ...conv, title: editingTitle.trim() } : conv
+            );
+            localStorage.setItem('userConversations', JSON.stringify(convs));
+
+            // Force reload to update UI
+            window.location.reload();
+          }
+        } catch (error) {
+          console.error("Failed to update conversation title:", error);
+          alert("Failed to update conversation title. Please try again.");
+        }
+      }
+
       setEditingConversationId(null);
       setEditingTitle('');
     }
@@ -115,16 +178,64 @@ const ChatInterface = ({
 
   const handleTitleKeyPress = (e) => {
     if (e.key === 'Enter') {
-      saveConversationTitle();
+      saveConversationTitle(e);
     } else if (e.key === 'Escape') {
-      cancelEditingConversation();
+      cancelEditingConversation(e);
     }
   };
 
-  const handleDeleteConversation = (conversationId, e) => {
+  // Modified handleDeleteConversation with fallback for missing function
+  const handleDeleteConversation = (e, conversationId) => {
     e.stopPropagation(); // Prevent conversation selection
     if (window.confirm('Are you sure you want to delete this conversation?')) {
-      deleteConversation(conversationId);
+      if (functionsReady && typeof deleteConversation === 'function') {
+        try {
+          deleteConversation(conversationId);
+        } catch (error) {
+          console.error("Error deleting conversation:", error);
+          // Fallback: delete directly in localStorage
+          try {
+            const storedConversations = localStorage.getItem('userConversations');
+            if (storedConversations) {
+              let convs = JSON.parse(storedConversations);
+              convs = convs.filter(conv => conv.id !== conversationId);
+              localStorage.setItem('userConversations', JSON.stringify(convs));
+
+              // Force reload to update UI
+              window.location.reload();
+            }
+          } catch (localError) {
+            console.error("Fallback failed:", localError);
+          }
+        }
+      } else {
+        console.error("deleteConversation function is not available");
+        // Direct localStorage fallback
+        try {
+          const storedConversations = localStorage.getItem('userConversations');
+          if (storedConversations) {
+            let convs = JSON.parse(storedConversations);
+            convs = convs.filter(conv => conv.id !== conversationId);
+            localStorage.setItem('userConversations', JSON.stringify(convs));
+
+            // Force reload to update UI
+            window.location.reload();
+          }
+        } catch (error) {
+          console.error("Failed to delete conversation:", error);
+          alert("Failed to delete conversation. Please try again.");
+        }
+      }
+
+      // Handle UI updates after deletion
+      if (conversationId === currentConversationId) {
+        const remainingConversations = conversations.filter(c => c.id !== conversationId);
+        if (remainingConversations.length > 0) {
+          handleConversationSelect(remainingConversations[0].id);
+        } else {
+          startNewConversation();
+        }
+      }
     }
   };
 
@@ -193,56 +304,59 @@ const ChatInterface = ({
                   {filteredConversations.map((conversation) => (
                     <div
                       key={conversation.id}
-                      className={`flex items-center px-2 py-2 rounded-md hover:bg-gray-800 cursor-pointer ${conversation.id === currentConversationId ? 'bg-gray-800' : ''}`}
+                      className={`group flex items-center px-2 py-2 rounded-md hover:bg-gray-800 cursor-pointer ${conversation.id === currentConversationId ? 'bg-gray-800' : ''}`}
                       onClick={() => editingConversationId !== conversation.id && handleConversationSelect(conversation.id)}
                     >
-                      <MessageSquare size={18} className="text-gray-400 mr-2" />
+                      <MessageSquare size={18} className="text-gray-400 mr-2 flex-shrink-0" />
 
                       {editingConversationId === conversation.id ? (
-                        // Editing mode
+                        // UPDATED: Editing mode with better layout
                         <div className="flex-1 flex items-center" onClick={(e) => e.stopPropagation()}>
                           <input
                             type="text"
                             value={editingTitle}
                             onChange={(e) => setEditingTitle(e.target.value)}
                             onKeyDown={handleTitleKeyPress}
-                            className="flex-1 bg-gray-700 text-gray-200 text-sm rounded px-2 py-1 focus:outline-none"
+                            className="flex-1 bg-gray-700 text-gray-200 text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
                             autoFocus
                           />
                           <button
                             onClick={saveConversationTitle}
-                            className="ml-1 text-green-400 hover:text-green-300"
+                            className="ml-1 p-1 rounded-full bg-green-600 text-white hover:bg-green-500"
+                            title="Save"
                           >
-                            <Check size={16} />
+                            <Check size={14} />
                           </button>
                           <button
                             onClick={cancelEditingConversation}
-                            className="ml-1 text-red-400 hover:text-red-300"
+                            className="ml-1 p-1 rounded-full bg-red-600 text-white hover:bg-red-500"
+                            title="Cancel"
                           >
-                            <X size={16} />
+                            <X size={14} />
                           </button>
                         </div>
                       ) : (
-                        // Display mode
+                        // UPDATED: Display mode with always visible buttons
                         <>
-                          <span className="text-sm text-gray-300 truncate flex-1">
+                          <span className="text-sm text-gray-300 truncate flex-1 pr-1">
                             {conversation.title || "New Conversation"}
                           </span>
-                          <button
-                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-200 ml-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              startEditingConversation(conversation.id, conversation.title);
-                            }}
-                          >
-                            <Edit2 size={14} />
-                          </button>
-                          <button
-                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-300 ml-1"
-                            onClick={(e) => handleDeleteConversation(conversation.id, e)}
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          <div className="flex items-center space-x-1">
+                            <button
+                              className="text-gray-500 hover:text-blue-400 p-1 rounded hover:bg-gray-700"
+                              onClick={(e) => startEditingConversation(e, conversation.id, conversation.title)}
+                              title="Edit"
+                            >
+                              <Edit size={14} />
+                            </button>
+                            <button
+                              className="text-gray-500 hover:text-red-400 p-1 rounded hover:bg-gray-700"
+                              onClick={(e) => handleDeleteConversation(e, conversation.id)}
+                              title="Delete"
+                            >
+                              <Trash size={14} />
+                            </button>
+                          </div>
                         </>
                       )}
                     </div>
@@ -324,8 +438,6 @@ const ChatInterface = ({
                 </div>
               </div>
             )}
-
-            {/* Upgrade plan */}
           </>
         )}
       </div>
@@ -338,6 +450,7 @@ const ChatInterface = ({
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="text-gray-400 hover:text-gray-200 mr-3"
           >
+            <Menu size={20} />
           </button>
 
           <div className="flex-1 flex items-center">
