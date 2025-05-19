@@ -1,7 +1,7 @@
 // api.js - Updated for Google Generative AI (Gemini) API
 
 // API key (for development only, move to environment variables in production)
-
+const GOOGLE_API_KEY = "AIzaSyCwg0_YjW1prl3KGMM4qVmmImCZL5yC3gU";
 
 // Send message to Google Generative AI
 export const sendChatMessage = async (message, isLoggedIn) => {
